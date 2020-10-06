@@ -33,9 +33,8 @@ class _PositiveInt(int):
 def _get_zipped_bite(bite_number: int) -> zipfile.Path:
     if bite_number != 1:
         raise RuntimeError
-    return zipfile.Path(
-        pathlib.Path(__file__).parent / f"pybites_bite{bite_number}.zip"
-    )
+    root = pathlib.Path(__file__).parents[1] / f"bites/pybites_bite{bite_number}.zip"
+    return zipfile.Path(root)
 
 
 @click.command()
