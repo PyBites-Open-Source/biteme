@@ -9,6 +9,9 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.8"
 click = "^7.1.2"
+isort = "^5.5.4"
+black = "^20.8b1"
+requests = "^2.24.0"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"
