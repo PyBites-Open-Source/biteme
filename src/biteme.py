@@ -4,8 +4,8 @@ from __future__ import annotations
 from io import BytesIO
 from os import PathLike
 from pathlib import Path
-from tempfile import TemporaryDirectory, TemporaryFile
-from typing import Iterator, NewType, Union
+from tempfile import TemporaryDirectory
+from typing import Union
 from zipfile import ZipFile
 
 import requests
