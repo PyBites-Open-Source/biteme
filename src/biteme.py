@@ -3,12 +3,9 @@ from __future__ import annotations
 import io
 import os
 import shutil
-import tempfile
-from contextlib import ExitStack
 from itertools import filterfalse
 from pathlib import Path
-from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, BinaryIO, NewType, Union
+from typing import BinaryIO, NewType, Union
 from urllib.parse import urljoin
 from zipfile import ZipFile, ZipInfo
 
@@ -36,9 +33,7 @@ def _is_macos_resource_fork(member: Union[str, ZipInfo]) -> bool:
     return member.startswith("__MACOSX/")
 
 
-def _extract(
-    archive: Union[ZipFile, _StrPath, BinaryIO], directory: _StrPath
-) -> Path:
+def _extract(archive: Union[ZipFile, _StrPath, BinaryIO], directory: _StrPath) -> Path:
     if not isinstance(archive, ZipFile):
         archive = ZipFile(archive)
 
