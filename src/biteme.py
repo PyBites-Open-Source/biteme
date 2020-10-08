@@ -36,6 +36,8 @@ def _extract_python_files(
         # TODO (Will): Write a more helpful error message.
         raise RuntimeError("unrecognized bite archive")
 
+    # XXX (Will): Would using `shutil.copyfileobj` with
+    # `ZipFile.read(...)` be preferable here?
     bite_archive.extractall(target_directory, members=python_module_names)
 
     for path in (target_directory / name for name in python_module_names):
@@ -51,7 +53,12 @@ if __name__ == "__main__":
     url = "https://bite-zipfiles.s3.eu-west-3.amazonaws.com/pybites_bite1.zip"
     response = requests.get(url)
     archive = BytesIO(response.content)
+
     with TemporaryDirectory() as directory:
         directory = Path(directory)
+
         _extract_python_files(archive, directory)
+
         assert len(list(directory.iterdir())) == 2
+        for child in directory.iterdir():
+            print(f"{child}")
