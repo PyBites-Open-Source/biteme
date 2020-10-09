@@ -5,12 +5,11 @@ import os
 import shutil
 from itertools import filterfalse
 from pathlib import Path
-from typing import BinaryIO, NewType, Union
+from typing import BinaryIO, NewType, Union, cast
 from urllib.parse import urljoin
 from zipfile import ZipFile, ZipInfo
 
 import requests
-
 
 _BiteID = NewType("_BiteID", int)
 
@@ -49,21 +48,29 @@ def _extract(archive: Union[ZipFile, _StrPath, BinaryIO], directory: _StrPath) -
         lambda member: member.is_dir() or _is_macos_resource_fork(member),
         archive.infolist(),
     ):
-        target_path = directory / os.path.basename(member.filename)
-        with archive.open(member) as source, target_path.open("wb") as target:
-            shutil.copyfileobj(source, target, member.file_size)
+        destination = directory / os.path.basename(member.filename)
+        with archive.open(member) as member_file, destination.open("xb") as output_file:
+            shutil.copyfileobj(
+                member_file,
+                cast(BinaryIO, output_file),
+                length=member.file_size,
+            )
 
     return directory
 
 
 if __name__ == "__main__":
+
+    import tempfile
+
     bite_id = _BiteID(1)
     archive = _download(bite_id)
 
-    directory = Path(__file__).parents[1] / f"{bite_id}"
-    directory.mkdir()
+    with tempfile.TemporaryDirectory() as temporary_directory:
+        directory = Path(temporary_directory) / f"{bite_id}"
+        directory.mkdir()
 
-    _extract(archive, directory)
+        _extract(archive, directory)
 
-    for child in directory.iterdir():
-        print(f"{child}")
+        for child in directory.iterdir():
+            print(f"{child}")
