@@ -1,48 +1,76 @@
 from __future__ import annotations
 
-import pathlib
-import tempfile
-import zipfile
-from typing import SupportsIndex, SupportsInt, Union
+import io
+import os
+import shutil
+from itertools import filterfalse
+from pathlib import Path
+from typing import BinaryIO, NewType, Union, cast
+from urllib.parse import urljoin
+from zipfile import ZipFile, ZipInfo
 
-import click
+import requests
 
+_BiteID = NewType("_BiteID", int)
 
-class _PositiveInt(int):
-    """A strictly-positive integer."""
-
-    def __new__(
-        cls, arg: Union[str, bytes, SupportsInt, SupportsIndex]
-    ) -> _PositiveInt:
-        value = int(arg)
-        if value <= 0:
-            # TODO: Write a message for the `ValueError`.
-            raise ValueError
-        # Not sure why Pylance is upset here.
-        return super().__new__(cls, value)  # type: ignore
-
-    def __add__(self, other: int) -> _PositiveInt:
-        return type(self)(super().__add__(other))
-
-    def __sub__(self, other: int) -> _PositiveInt:
-        return type(self)(super().__sub__(other))
-
-    # TODO: Add other binary dunders?
+_StrPath = Union[str, "os.PathLike[str]"]
 
 
-def _get_zipped_bite(bite_number: int) -> zipfile.Path:
-    if bite_number != 1:
-        raise RuntimeError
-    root = pathlib.Path(__file__).parents[1] / f"bites/pybites_bite{bite_number}.zip"
-    return zipfile.Path(root)
+def _download(bite_id: _BiteID) -> ZipFile:
+    filename = f"pybites_bite{bite_id}.zip"
+    url = urljoin("https://bite-zipfiles.s3.eu-west-3.amazonaws.com", filename)
+    response = requests.get(url)
+    buffer = io.BytesIO(response.content)
+    archive = ZipFile(buffer)
+    archive.filename = filename
+    return archive
 
 
-@click.command()
-@click.argument("bite-number", type=_PositiveInt)
-def main(bite_number: int) -> None:
-    bite_number = _PositiveInt(bite_number)
-    zipped_bite = _get_zipped_bite(bite_number)
+def _is_macos_resource_fork(member: Union[str, ZipInfo]) -> bool:
+    if isinstance(member, ZipInfo):
+        member = member.filename
+    return member.startswith("__MACOSX/")
+
+
+def _extract(archive: Union[ZipFile, _StrPath, BinaryIO], directory: _StrPath) -> Path:
+    if not isinstance(archive, ZipFile):
+        archive = ZipFile(archive)
+
+    directory = Path(directory)
+
+    # XXX (Will): Should this be more precise? I want exactly two .py
+    # files: "<module-name>.py" and "test_<module-name>.py", for some
+    # string "<module-name>". I also know that if the zip archive was
+    # made on macOS, I'll have a one-to-one correspondance between the
+    # actual archive members found in "<archive-name>/" and the archive
+    # members found in "__MACOSX/.<archive-name>/".
+    for member in filterfalse(
+        lambda member: member.is_dir() or _is_macos_resource_fork(member),
+        archive.infolist(),
+    ):
+        destination = directory / os.path.basename(member.filename)
+        with archive.open(member) as member_file, destination.open("xb") as output_file:
+            shutil.copyfileobj(
+                member_file,
+                cast(BinaryIO, output_file),
+                length=member.file_size,
+            )
+
+    return directory
 
 
 if __name__ == "__main__":
-    main()
+
+    import tempfile
+
+    bite_id = _BiteID(1)
+    archive = _download(bite_id)
+
+    with tempfile.TemporaryDirectory() as temporary_directory:
+        directory = Path(temporary_directory) / f"{bite_id}"
+        directory.mkdir()
+
+        _extract(archive, directory)
+
+        for child in directory.iterdir():
+            print(f"{child}")
