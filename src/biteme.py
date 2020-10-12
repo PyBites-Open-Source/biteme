@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import os
 import shutil
+from venv import EnvBuilder
 from itertools import filterfalse
 from pathlib import Path
 from typing import BinaryIO, NewType, Union, cast
@@ -27,12 +28,13 @@ def _download(bite_id: _BiteID) -> ZipFile:
 
 
 def _is_macos_resource_fork(member: Union[str, ZipInfo]) -> bool:
-    if isinstance(member, ZipInfo):
-        member = member.filename
-    return member.startswith("__MACOSX/")
+    filename = member.filename if isinstance(member, ZipInfo) else member
+    return filename.startswith("__MACOSX/")
 
 
-def _extract(archive: Union[ZipFile, _StrPath, BinaryIO], directory: _StrPath) -> Path:
+def extract_bite(
+    archive: Union[ZipFile, _StrPath, BinaryIO], directory: _StrPath
+) -> Path:
     if not isinstance(archive, ZipFile):
         archive = ZipFile(archive)
 
@@ -59,6 +61,11 @@ def _extract(archive: Union[ZipFile, _StrPath, BinaryIO], directory: _StrPath) -
     return directory
 
 
+def _create_virtualenv(directory: _StrPath) -> None:
+    builder = EnvBuilder(with_pip=True, prompt=f"bite-{bite_id}")
+    builder.create(directory)
+
+
 if __name__ == "__main__":
 
     import tempfile
@@ -70,7 +77,7 @@ if __name__ == "__main__":
         directory = Path(temporary_directory) / f"{bite_id}"
         directory.mkdir()
 
-        _extract(archive, directory)
+        extract_bite(archive, directory)
 
         for child in directory.iterdir():
             print(f"{child}")
