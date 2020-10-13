@@ -62,7 +62,6 @@ def extract_bite(
         archive = ZipFile(archive)
 
     directory = Path(directory)
-    directory.mkdir()
 
     for member in filterfalse(
         lambda member: member.is_dir() or _is_macos_resource_fork(member),
@@ -80,7 +79,7 @@ def extract_bite(
     return directory
 
 
-def create_virtualenv(directory: _StrPath, bite_id: _BiteID) -> None:
+def create_virtualenv(directory: _StrPath, bite_id: BiteID) -> None:
     venv.create(
         Path(directory) / ".venv",
         with_pip=True,
@@ -90,7 +89,7 @@ def create_virtualenv(directory: _StrPath, bite_id: _BiteID) -> None:
 
 
 if __name__ == "__main__":
-    bite_id = _BiteID(1)
+    bite_id = BiteID(1)
     directory = Path(__file__).parents[1] / f"bites/{bite_id}"
 
     archive = download_archive(bite_id)
