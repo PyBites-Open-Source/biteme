@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import os
 import shutil
-from venv import EnvBuilder
+import venv
 from itertools import filterfalse
 from pathlib import Path
 from typing import BinaryIO, NewType, Union, cast
@@ -32,40 +32,10 @@ def _is_macos_resource_fork(member: Union[str, ZipInfo]) -> bool:
     return filename.startswith("__MACOSX/")
 
 
-def extract_bite(
-    archive: Union[ZipFile, _StrPath, BinaryIO], directory: _StrPath
-) -> Path:
-    if not isinstance(archive, ZipFile):
-        archive = ZipFile(archive)
-
-    directory = Path(directory)
-
-    # XXX (Will): Should this be more precise? I want exactly two .py
-    # files: "<module-name>.py" and "test_<module-name>.py", for some
-    # string "<module-name>". I also know that if the zip archive was
-    # made on macOS, I'll have a one-to-one correspondance between the
-    # actual archive members found in "<archive-name>/" and the archive
-    # members found in "__MACOSX/.<archive-name>/".
-    for member in filterfalse(
-        lambda member: member.is_dir() or _is_macos_resource_fork(member),
-        archive.infolist(),
-    ):
-        destination = directory / os.path.basename(member.filename)
-        with archive.open(member) as member_file, destination.open("xb") as output_file:
-            shutil.copyfileobj(
-                member_file,
-                cast(BinaryIO, output_file),
-                length=member.file_size,
-            )
-
-    return directory
-
-
 def _find_python_module(directory: _StrPath) -> Path:
     for path in Path(directory).iterdir():
         if not path.name.startswith("test_") and path.suffix == ".py":
             return path
-
     raise ValueError(f"Cannot find a non-test python module in {directory}")
 
 
@@ -85,21 +55,44 @@ def _check_bite(directory: _StrPath) -> None:
         raise ValueError("Unrecognized bite archive")
 
 
-def _create_virtualenv(directory: _StrPath) -> None:
-    builder = EnvBuilder(with_pip=True, prompt=f"bite-{bite_id}")
-    builder.create(directory)
+def extract_bite(
+    archive: Union[ZipFile, _StrPath, BinaryIO], directory: _StrPath
+) -> Path:
+    if not isinstance(archive, ZipFile):
+        archive = ZipFile(archive)
+
+    directory = Path(directory)
+    directory.mkdir()
+
+    for member in filterfalse(
+        lambda member: member.is_dir() or _is_macos_resource_fork(member),
+        archive.infolist(),
+    ):
+        destination = directory / os.path.basename(member.filename)
+        with archive.open(member) as member_file, destination.open("xb") as output_file:
+            shutil.copyfileobj(
+                member_file,
+                cast(BinaryIO, output_file),
+                length=member.file_size,
+            )
+
+    _check_bite(directory)
+    return directory
+
+
+def _create_virtualenv(directory: _StrPath, bite_id: _BiteID) -> None:
+    venv.create(
+        Path(directory) / ".venv",
+        with_pip=True,
+        prompt=f"bite-{bite_id}",
+        upgrade_deps=True,
+    )
 
 
 if __name__ == "__main__":
-
-    import tempfile
-
     bite_id = _BiteID(1)
+    directory = Path(__file__).parents[1] / f"bites/{bite_id}"
+
     archive = _download_archive(bite_id)
-
-    with tempfile.TemporaryDirectory() as temporary_directory:
-        directory = Path(temporary_directory) / f"{bite_id}"
-        directory.mkdir()
-
-        extract_bite(archive, directory)
-        _check_bite(directory)
+    extract_bite(archive, directory)
+    _create_virtualenv(directory, bite_id)
