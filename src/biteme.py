@@ -80,7 +80,7 @@ def extract_bite(
     return directory
 
 
-def _create_virtualenv(directory: _StrPath, bite_id: _BiteID) -> None:
+def create_virtualenv(directory: _StrPath, bite_id: _BiteID) -> None:
     venv.create(
         Path(directory) / ".venv",
         with_pip=True,
@@ -95,4 +95,4 @@ if __name__ == "__main__":
 
     archive = _download_archive(bite_id)
     extract_bite(archive, directory)
-    _create_virtualenv(directory, bite_id)
+    create_virtualenv(directory, bite_id)
