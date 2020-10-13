@@ -6,6 +6,7 @@
   "python.linting.enabled": false,
   "python.linting.mypyEnabled": true,
   "python.linting.flake8Enabled": true,
+  "python.analysis.typeCheckingMode": "basic",
   "python.linting.pylintEnabled": false,
   "python.testing.pytestArgs": ["--randomly-dont-reorganize", "tests"],
   "python.testing.pytestEnabled": true,
