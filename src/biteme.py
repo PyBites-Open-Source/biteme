@@ -12,12 +12,12 @@ from zipfile import ZipFile, ZipInfo
 
 import requests
 
-_BiteID = NewType("_BiteID", int)
+BiteID = NewType("BiteID", int)
 
 _StrPath = Union[str, "os.PathLike[str]"]
 
 
-def _download_archive(bite_id: _BiteID) -> ZipFile:
+def download_archive(bite_id: BiteID) -> ZipFile:
     filename = f"pybites_bite{bite_id}.zip"
     url = urljoin("https://bite-zipfiles.s3.eu-west-3.amazonaws.com", filename)
     response = requests.get(url)
@@ -93,6 +93,6 @@ if __name__ == "__main__":
     bite_id = _BiteID(1)
     directory = Path(__file__).parents[1] / f"bites/{bite_id}"
 
-    archive = _download_archive(bite_id)
+    archive = download_archive(bite_id)
     extract_bite(archive, directory)
     create_virtualenv(directory, bite_id)
