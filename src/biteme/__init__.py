@@ -59,7 +59,7 @@ def _find_python_module(directory: Union[str, PathLike[str]]) -> Path:
     raise FileNotFoundError
 
 
-def _check_directory(directory: Union[str, PathLike[str]]) -> None:
+def _validate_bite_directory(directory: Union[str, PathLike[str]]) -> None:
     directory = Path(directory)
     python_module_name = _find_python_module(directory).name
     expected_names = {
