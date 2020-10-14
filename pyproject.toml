@@ -1,21 +1,23 @@
 [tool.poetry]
-name = "biteme"
-version = "0.1.0"
-description = ""
 authors = ["Will Frey <jfrey89@gmail.com>"]
-readme = "README.md"
+description = ""
 license = "MIT"
+name = "biteme"
+readme = "README.md"
+version = "0.1.0"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 
 black = "^20.8b1"
 click = "^7.1.2"
 isort = "^5.5.4"
+more-itertools = "^8.5.0"
 requests = "^2.24.0"
 
 [tool.poetry.dev-dependencies]
-black = "^20.8b1"
+autoflake = "^1.4"
+black = {git = "https://github.com/psf/black.git"}
 darglint = "^1.5.4"
 flake8 = "^3.8.3"
 flake8-adjustable-complexity = "^0.0.1"
@@ -38,7 +40,7 @@ flake8-typing-imports = "^1.9.0"
 flakehell = "^0.6.1"
 ipykernel = "^5.3.4"
 isort = "^5.6.1"
-mypy = "^0.782"
+mypy = "^0.790"
 pep8-naming = "^0.11.1"
 pytest = "^6.1.0"
 pytest-cov = "^2.10.1"
@@ -47,12 +49,14 @@ pytest-randomly = "^3.4.1"
 wemake-python-styleguide = {git = "https://github.com/wemake-services/wemake-python-styleguide.git"}
 
 [build-system]
-requires = ["poetry-core>=1.0.0a5"]
 build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0a5"]
 
+[tool.black]
+target-version = ["py39"]
 
 [tool.isort]
-profile = "black"
 combine_as_imports = true
 combine_star = true
+profile = "black"
 remove_redundant_aliases = true

@@ -11,7 +11,7 @@ import biteme
 FIXTURE_DIR = Path(__file__).parent / "fixtures"
 
 
-@pytest.fixture(params=["archive.zip", "macos-archive.zip"])
+@pytest.fixture(params=["archive.zip", "macos-archive.zip"], ids=str)
 def archive(request: SubRequest) -> ZipFile:
     archive_path = FIXTURE_DIR / str(request.param)
     return ZipFile(archive_path)
@@ -33,3 +33,14 @@ def test_extract_bite(archive: ZipFile, directory: Path) -> None:
     biteme.extract_bite(archive, directory)
     actual_filenames = {str(path.name) for path in directory.iterdir()}
     assert actual_filenames == expected_filenames
+
+
+@pytest.fixture
+def bite_id() -> biteme.BiteID:
+    return biteme.BiteID(1)
+
+
+# XXX (Will): This test is slow.
+def test_create_virtualenv(directory: Path, bite_id: biteme.BiteID) -> None:
+    biteme.create_virtualenv(directory, bite_id)
+    assert {path.name for path in directory.iterdir()} == {".venv"}
