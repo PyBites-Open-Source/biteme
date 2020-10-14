@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import os
 import shutil
+from venv import EnvBuilder
 from itertools import filterfalse
 from pathlib import Path
 from typing import BinaryIO, NewType, Union, cast
@@ -16,7 +17,7 @@ _BiteID = NewType("_BiteID", int)
 _StrPath = Union[str, "os.PathLike[str]"]
 
 
-def _download(bite_id: _BiteID) -> ZipFile:
+def _download_archive(bite_id: _BiteID) -> ZipFile:
     filename = f"pybites_bite{bite_id}.zip"
     url = urljoin("https://bite-zipfiles.s3.eu-west-3.amazonaws.com", filename)
     response = requests.get(url)
@@ -27,12 +28,13 @@ def _download(bite_id: _BiteID) -> ZipFile:
 
 
 def _is_macos_resource_fork(member: Union[str, ZipInfo]) -> bool:
-    if isinstance(member, ZipInfo):
-        member = member.filename
-    return member.startswith("__MACOSX/")
+    filename = member.filename if isinstance(member, ZipInfo) else member
+    return filename.startswith("__MACOSX/")
 
 
-def _extract(archive: Union[ZipFile, _StrPath, BinaryIO], directory: _StrPath) -> Path:
+def extract_bite(
+    archive: Union[ZipFile, _StrPath, BinaryIO], directory: _StrPath
+) -> Path:
     if not isinstance(archive, ZipFile):
         archive = ZipFile(archive)
 
@@ -59,18 +61,45 @@ def _extract(archive: Union[ZipFile, _StrPath, BinaryIO], directory: _StrPath) -
     return directory
 
 
+def _find_python_module(directory: _StrPath) -> Path:
+    for path in Path(directory).iterdir():
+        if not path.name.startswith("test_") and path.suffix == ".py":
+            return path
+
+    raise ValueError(f"Cannot find a non-test python module in {directory}")
+
+
+def _check_bite(directory: _StrPath) -> None:
+    directory = Path(directory)
+    python_module_name = _find_python_module(directory).name
+    python_test_module_name = f"test_{python_module_name}"
+    expected_filenames = {
+        "bite.html",
+        "README.md",
+        python_module_name,
+        python_test_module_name,
+        "git.txt",
+    }
+    filenames = {path.name for path in directory.iterdir()}
+    if filenames != expected_filenames:
+        raise ValueError("Unrecognized bite archive")
+
+
+def _create_virtualenv(directory: _StrPath) -> None:
+    builder = EnvBuilder(with_pip=True, prompt=f"bite-{bite_id}")
+    builder.create(directory)
+
+
 if __name__ == "__main__":
 
     import tempfile
 
     bite_id = _BiteID(1)
-    archive = _download(bite_id)
+    archive = _download_archive(bite_id)
 
     with tempfile.TemporaryDirectory() as temporary_directory:
         directory = Path(temporary_directory) / f"{bite_id}"
         directory.mkdir()
 
-        _extract(archive, directory)
-
-        for child in directory.iterdir():
-            print(f"{child}")
+        extract_bite(archive, directory)
+        _check_bite(directory)
