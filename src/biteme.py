@@ -11,13 +11,16 @@ import zipfile
 import requests
 
 
-def download_and_extract(bite_number: int, directory: pathlib.Path) -> pathlib.Path:
+def download_and_extract(
+    bite_number: int, root_directory: pathlib.Path
+) -> pathlib.Path:
+    bite_directory = root_directory / f"{bite_number}"
     api_key = os.getenv("PYBITES_API_KEY")
     url = f"http://codechalleng.es/api/bites/downloads/{api_key}/{bite_number}"
     response = requests.get(url)
     with zipfile.ZipFile(io.BytesIO(response.content)) as zip_file:
-        zip_file.extractall(path=directory / f"{bite_number}")
-    return directory / f"{bite_number}"
+        zip_file.extractall(path=bite_directory)
+    return bite_directory
 
 
 def create_virtual_environment(bite_directory: pathlib.Path) -> None:
