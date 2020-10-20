@@ -8,6 +8,7 @@ import venv
 import pathlib
 import zipfile
 
+import types
 import requests
 
 
@@ -23,10 +24,15 @@ def download_and_extract(
     return bite_directory
 
 
+class BiteEnvBuilder(venv.EnvBuilder):
+    def post_setup(self, context: types.SimpleNamespace) -> None:
+        python = pathlib.Path(context.env_dir) / "bin/python"
+        subprocess.run([python, "-m", "pip", "install", "pytest"])
+
+
 def create_virtual_environment(bite_directory: pathlib.Path) -> None:
-    venv.create(bite_directory / ".venv", with_pip=True, upgrade_deps=True)
-    python = bite_directory / ".venv/bin/python"
-    subprocess.run([python, "-m", "pip", "install", "pytest"])
+    builder = BiteEnvBuilder(with_pip=True, upgrade_deps=True)
+    builder.create(bite_directory / ".venv")
 
 
 def main() -> None:
