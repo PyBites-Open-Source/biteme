@@ -20,7 +20,7 @@ def download_and_extract(bite_number: int, directory: pathlib.Path) -> pathlib.P
     return directory / f"{bite_number}"
 
 
-def create_virtual_environment(bite_directory: Path) -> None:
+def create_virtual_environment(bite_directory: pathlib.Path) -> None:
     venv.create(bite_directory / ".venv", with_pip=True, upgrade_deps=True)
     python = bite_directory / ".venv/bin/python"
     subprocess.run([python, "-m", "pip", "install", "pytest"])
