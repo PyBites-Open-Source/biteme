@@ -22,7 +22,7 @@ def directory(tmpdir: Union[str, "os.PathLike[str]"]) -> Path:
     return Path(tmpdir)
 
 
-def test_extract_bite(archive: ZipFile, directory: Path) -> None:
+def test_extract(archive: ZipFile, directory: Path) -> None:
     expected_filenames = {
         "bite.html",
         "README.md",
@@ -30,7 +30,7 @@ def test_extract_bite(archive: ZipFile, directory: Path) -> None:
         "test_summing.py",
         "git.txt",
     }
-    biteme.extract_bite(archive, directory)
+    biteme.extract(archive, directory)
     actual_filenames = {str(path.name) for path in directory.iterdir()}
     assert actual_filenames == expected_filenames
 
