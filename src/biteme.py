@@ -1,46 +1,56 @@
 from __future__ import annotations
 
 import argparse
-import io
 import os
 import subprocess
 import venv
-import pathlib
-import zipfile
+from io import BytesIO
+from pathlib import Path
+from types import SimpleNamespace
+from typing import NewType, Union
+from zipfile import ZipFile
 
-import types
 import requests
 
+BiteNumber = NewType("BiteNumber", int)
+StrPath = Union[str, os.PathLike[str]]
 
-def download_and_extract(
-    bite_number: int, root_directory: pathlib.Path
-) -> pathlib.Path:
-    bite_directory = root_directory / f"{bite_number}"
-    api_key = os.getenv("PYBITES_API_KEY")
-    url = f"http://codechalleng.es/api/bites/downloads/{api_key}/{bite_number}"
+
+API_KEY = os.getenv("PYBITES_API_KEY", "free")
+
+
+def download_zipped_bite(bite_number: BiteNumber) -> ZipFile:
+    url = f"http://codechalleng.es/api/bites/downloads/{API_KEY}/{bite_number}"
     response = requests.get(url)
-    with zipfile.ZipFile(io.BytesIO(response.content)) as zip_file:
-        zip_file.extractall(path=bite_directory)
+    return ZipFile(BytesIO(response.content))
+
+
+def download_and_extract(bite_number: BiteNumber, directory: StrPath) -> Path:
+    bite_directory = Path(directory) / f"{bite_number}"
+    with download_zipped_bite(bite_number) as zipped_bite:
+        zipped_bite.extractall(bite_directory)
     return bite_directory
 
 
-class BiteEnvBuilder(venv.EnvBuilder):
-    def post_setup(self, context: types.SimpleNamespace) -> None:
-        python = pathlib.Path(context.env_dir) / "bin/python"
+class _BiteEnvBuilder(venv.EnvBuilder):
+    @staticmethod
+    def post_setup(context: SimpleNamespace) -> None:
+        python = context.env_exe
         subprocess.run([python, "-m", "pip", "install", "pytest"])
 
 
-def create_virtual_environment(bite_directory: pathlib.Path) -> None:
-    builder = BiteEnvBuilder(with_pip=True, upgrade_deps=True)
-    builder.create(bite_directory / ".venv")
+def create_virtual_environment(directory: StrPath) -> None:
+    builder = _BiteEnvBuilder(clear=True, with_pip=True, upgrade_deps=True)
+    builder.create(Path(directory) / ".venv")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("-b", "--bite-number", type=int, required=True)
-    parser.add_argument("-d", "--directory", type=pathlib.Path, required=True)
+    parser.add_argument("-d", "--directory", required=True)
 
     args = parser.parse_args()
+
     bite_directory = download_and_extract(args.bite_number, args.directory)
     create_virtual_environment(bite_directory)
 
