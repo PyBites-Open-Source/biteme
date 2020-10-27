@@ -52,7 +52,7 @@ class _BiteEnvBuilder(venv.EnvBuilder):
     def post_setup(self, context: _HasEnvExe) -> None:
         python = context.env_exe
         requirements = get_bite_requirements()
-        subprocess.run(args=[python, "-m", "pip", "install", *requirements])
+        subprocess.run([python, "-m", "pip", "install", *requirements])
 
 
 def create_virtual_environment(directory: StrPath) -> None:
