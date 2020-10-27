@@ -17,7 +17,7 @@ from more_itertools import first_true
 StrPath = Union[str, PathLike[str]]
 
 
-def get_bite_directory(directory: StrPath, bite: int) -> Path:
+def get_bite_directory(bite: int, directory: StrPath) -> Path:
     return Path(directory) / f"{bite}"
 
 
@@ -29,7 +29,7 @@ def download_zipped_bite(bite: int, api_key: str) -> ZipFile:
 
 
 def download_and_extract_bite(bite: int, api_key: str, directory: StrPath) -> Path:
-    bite_directory = get_bite_directory(directory, bite)
+    bite_directory = get_bite_directory(bite, directory)
     with download_zipped_bite(bite, api_key) as zipped_bite:
         zipped_bite.extractall(bite_directory)
     return bite_directory
@@ -71,21 +71,16 @@ class BiteMetadata:
     function: str
 
 
-def get_bite_metadata(bite: int) -> BiteMetadata:
-    url = "http://codechalleng.es/api/bites/"
+def get_bite_metadata() -> frozenset[BiteMetadata]:
+    url = "http://codechalleng.es/api/bites"
     with requests.get(url) as response:
         response.raise_for_status()
-        if metadata := first_true(
-            (BiteMetadata(**kwargs) for kwargs in response.json()),
-            pred=lambda metadata: metadata.number == bite,
-        ):
-            return metadata
-        raise ValueError
+        return frozenset(BiteMetadata(**kwargs) for kwargs in response.json())
 
 
 @click.command()
 @click.version_option()
-@click.argument("bite", type=click.INT)
+@click.argument("bite", type=click.IntRange(min=1, max=None))
 @click.option(
     "-k",
     "--api-key",
