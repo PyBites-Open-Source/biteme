@@ -5,11 +5,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python: biteme.py",
+      "name": "Python: Current File",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/src/biteme.py",
-      "args": ["--bite-number=1", "--directory=${workspaceFolder}/out"],
+      "program": "${file}",
       "console": "integratedTerminal"
     }
   ]

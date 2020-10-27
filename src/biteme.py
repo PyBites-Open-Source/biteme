@@ -1,59 +1,67 @@
 from __future__ import annotations
 
-import argparse
-import os
 import subprocess
 import venv
 from io import BytesIO
+from os import PathLike
 from pathlib import Path
 from types import SimpleNamespace
-from typing import NewType, Union
+from typing import Optional, Union
 from zipfile import ZipFile
 
+import click
 import requests
 
-BiteNumber = NewType("BiteNumber", int)
-StrPath = Union[str, os.PathLike[str]]
+
+StrPath = Union[str, PathLike[str]]
 
 
-API_KEY = os.getenv("PYBITES_API_KEY", "free")
+def get_bite_directory(directory: StrPath, bite: int) -> Path:
+    return Path(directory) / f"{bite}"
 
 
-def download_zipped_bite(bite_number: BiteNumber) -> ZipFile:
-    url = f"http://codechalleng.es/api/bites/downloads/{API_KEY}/{bite_number}"
-    response = requests.get(url)
-    return ZipFile(BytesIO(response.content))
+def download_zipped_bite(bite: int, api_key: str) -> ZipFile:
+    url = f"http://codechalleng.es/api/bites/downloads/{api_key}/{bite}"
+    with requests.get(url) as response:
+        response.raise_for_status()
+        return ZipFile(BytesIO(response.content))
 
 
-def download_and_extract(bite_number: BiteNumber, directory: StrPath) -> Path:
-    bite_directory = Path(directory) / f"{bite_number}"
-    with download_zipped_bite(bite_number) as zipped_bite:
+def download_and_extract(bite: int, api_key: str, directory: StrPath) -> Path:
+    bite_directory = get_bite_directory(directory, bite)
+    with download_zipped_bite(bite, api_key) as zipped_bite:
         zipped_bite.extractall(bite_directory)
     return bite_directory
 
 
-class _BiteEnvBuilder(venv.EnvBuilder):
-    @staticmethod
-    def post_setup(context: SimpleNamespace) -> None:
-        python = context.env_exe
-        subprocess.run([python, "-m", "pip", "install", "pytest"])
+# class _EnvBuilder(venv.EnvBuilder):
+#     def post_setup(self, context: SimpleNamespace) -> None:
+#         python: str = context.env_exe
+#         subprocess.run([python, "-m", "pip", "install", "pytest"])
 
 
-def create_virtual_environment(directory: StrPath) -> None:
-    builder = _BiteEnvBuilder(clear=True, with_pip=True, upgrade_deps=True)
-    builder.create(Path(directory) / ".venv")
+# def create_virtual_environment(directory: StrPath) -> None:
+#     builder = _EnvBuilder(clear=True, with_pip=True, upgrade_deps=True)
+#     builder.create(directory)
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--bite-number", type=int, required=True)
-    parser.add_argument("-d", "--directory", required=True)
-
-    args = parser.parse_args()
-
-    bite_directory = download_and_extract(args.bite_number, args.directory)
-    create_virtual_environment(bite_directory)
-
-
-if __name__ == "__main__":
-    main()
+@click.command()
+@click.version_option()
+@click.argument("bite", type=click.INT)
+@click.option(
+    "-k",
+    "--api-key",
+    default="free",
+    envvar="PYBITES_API_KEY",
+    help="Your PyBites API key.",
+)
+@click.option(
+    "-r",
+    "--repository",
+    envvar="PYBITES_REPOSITORY",
+    type=click.Path(file_okay=False, dir_okay=True, writable=True),
+    help="The directory to download the bite to.",
+)
+def main(bite: int, api_key: str, repository: StrPath) -> None:
+    bite_directory = download_and_extract(bite, api_key, repository)
+    venv.create(bite_directory / ".venv", with_pip=True, upgrade_deps=True)
