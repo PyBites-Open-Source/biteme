@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from io import BytesIO
 from os import PathLike
 from pathlib import Path
-from typing import Literal, Protocol, Union, runtime_checkable
+from typing import Protocol, Union
 from zipfile import ZipFile
 
 from more_itertools import first_true
