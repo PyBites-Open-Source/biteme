@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import Protocol, Union
 from zipfile import ZipFile
 
-from more_itertools import first_true
 import click
 import requests
+from more_itertools import first_true
 
 
 StrPath = Union[str, PathLike[str]]
