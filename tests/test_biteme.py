@@ -6,20 +6,20 @@ import requests
 from pytest_mock import MockerFixture
 
 import biteme
-from biteme import get_bite_directory
+from biteme import _get_bite_directory
 
 
 FREE_BITES = 1, 2, 3, 5, 30, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 238, 241
 
 
-def test_get_bite_directory(tmp_path: Path) -> None:
-    directory = get_bite_directory(tmp_path, 1)
+def test__get_bite_directory(tmp_path: Path) -> None:
+    directory = _get_bite_directory(tmp_path, 1)
     assert directory == tmp_path / "1"
 
 
-def test_download_zipped_bite(mocker: MockerFixture) -> None:
+def test__download_zipped_bite(mocker: MockerFixture) -> None:
     spy = mocker.spy(requests, "get")
-    zipped_bite = biteme.download_zipped_bite(bite=1, api_key="testing")
+    zipped_bite = biteme._download_zipped_bite(bite_number=1, api_key="testing")
     spy.assert_called_once_with("http://codechalleng.es/api/bites/downloads/testing/1")
     assert zipped_bite.namelist() == [
         "README.md",
@@ -29,9 +29,9 @@ def test_download_zipped_bite(mocker: MockerFixture) -> None:
     ]
 
 
-def test_get_bite_requirements(mocker: MockerFixture) -> None:
+def test__get_bite_requirements(mocker: MockerFixture) -> None:
     spy = mocker.spy(requests, "get")
-    requirements = biteme.get_bite_requirements()
+    requirements = biteme._get_bite_requirements()
     spy.assert_called_once_with(
         "https://raw.githubusercontent.com/pybites/platform-dependencies/master/requirements.txt"
     )

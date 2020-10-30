@@ -8,7 +8,7 @@ version = "0.1.0"
 
 
 [tool.poetry.scripts]
-biteme = "biteme:main"
+biteme = "biteme:cli"
 
 
 [tool.poetry.dependencies]
