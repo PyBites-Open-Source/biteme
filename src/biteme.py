@@ -16,7 +16,7 @@ import requests
 
 ENVIRONMENT_VARIABLE_PREFIX = "PYBITES"
 DEFAULT_API_KEY = "free"
-
+DEFAULT_REQUIREMENTS_URL = "https://raw.githubusercontent.com/pybites/platform-dependencies/master/requirements.txt"
 
 StrPath = Union[str, PathLike[str]]
 
@@ -58,8 +58,7 @@ def download_and_extract_bite(
 
 
 # Maybe this should be a class method?
-def get_requirements() -> list[str]:
-    url = "https://raw.githubusercontent.com/pybites/platform-dependencies/master/requirements.txt"
+def get_requirements(url: str = DEFAULT_REQUIREMENTS_URL) -> list[str]:
     with requests.get(url) as response:
         response.raise_for_status()
         return response.text.splitlines()  # type: ignore
