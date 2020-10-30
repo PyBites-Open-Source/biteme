@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import subprocess
 import venv
+from collections.abc import Mapping
 from dataclasses import dataclass
 from io import BytesIO
 from os import PathLike
 from pathlib import Path
-from typing import Optional, Protocol, Union
+from typing import Any, Optional, Protocol, Union, cast, List
 from zipfile import ZipFile
 
 import click
@@ -37,7 +38,7 @@ class BiteMetadata:
     title: str
     description: str
     level: str
-    tags: list[str]
+    tags: List[str]
     free: bool
     score: int
     function: str
@@ -47,7 +48,7 @@ def get_bite_metadata(bite_number: int) -> BiteMetadata:
     url = API_URL + f"/{bite_number}"
     with requests.get(url) as response:
         response.raise_for_status()
-        return BiteMetadata(**only(response.json()))
+        return BiteMetadata(**cast(Mapping[str, Any], only(response.json())))
 
 
 def download_bite_archive(bite_number: int, api_key: Optional[str] = None) -> ZipFile:
@@ -67,7 +68,7 @@ def download_and_extract_bite(
     return bite_directory
 
 
-def get_requirements(url: str = DEFAULT_REQUIREMENTS_URL) -> list[str]:
+def get_requirements(url: str = DEFAULT_REQUIREMENTS_URL) -> List[str]:
     with requests.get(url) as response:
         response.raise_for_status()
         return response.text.splitlines()
@@ -110,7 +111,7 @@ def cli(bite_number: int, api_key: str, repository: StrPath) -> None:
     # want some sort of error thrown so that you don't have a faulty environment.
     bite_metadata = get_bite_metadata(bite_number)
     if bite_metadata.function != "default":
-        raise RuntimeError("Unsupported bite.")
+        raise RuntimeError(f"unsupported bite {bite_number}")
 
     bite_directory = download_and_extract_bite(bite_number, repository, api_key)
     create_bite_venv(bite_directory)
