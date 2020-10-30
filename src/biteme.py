@@ -27,22 +27,30 @@ def download_zipped_bite(bite: int, api_key: str) -> ZipFile:
         return ZipFile(BytesIO(response.content))
 
 
-def download_and_extract(bite: int, api_key: str, directory: StrPath) -> Path:
+def download_and_extract_bite(bite: int, api_key: str, directory: StrPath) -> Path:
     bite_directory = get_bite_directory(directory, bite)
     with download_zipped_bite(bite, api_key) as zipped_bite:
         zipped_bite.extractall(bite_directory)
     return bite_directory
 
 
-# class _EnvBuilder(venv.EnvBuilder):
-#     def post_setup(self, context: SimpleNamespace) -> None:
-#         python: str = context.env_exe
-#         subprocess.run([python, "-m", "pip", "install", "pytest"])
+def get_bite_requirements() -> list[str]:
+    url = "https://raw.githubusercontent.com/pybites/platform-dependencies/master/requirements.txt"
+    with requests.get(url) as response:
+        response.raise_for_status()
+        return response.text.split()
 
 
-# def create_virtual_environment(directory: StrPath) -> None:
-#     builder = _EnvBuilder(clear=True, with_pip=True, upgrade_deps=True)
-#     builder.create(directory)
+class _BiteEnvBuilder(venv.EnvBuilder):
+    def post_setup(self, context: SimpleNamespace) -> None:
+        python: str = context.env_exe
+        requirements = get_bite_requirements()
+        subprocess.run([python, "-m", "pip", "install"] + requirements)
+
+
+def create_virtual_environment(directory: StrPath) -> None:
+    builder = _BiteEnvBuilder(clear=True, with_pip=True, upgrade_deps=True)
+    builder.create(directory)
 
 
 @click.command()
@@ -63,5 +71,5 @@ def download_and_extract(bite: int, api_key: str, directory: StrPath) -> Path:
     help="The directory to download the bite to.",
 )
 def main(bite: int, api_key: str, repository: StrPath) -> None:
-    bite_directory = download_and_extract(bite, api_key, repository)
-    venv.create(bite_directory / ".venv", with_pip=True, upgrade_deps=True)
+    bite_directory = download_and_extract_bite(bite, api_key, repository)
+    create_virtual_environment(bite_directory / ".venv")
