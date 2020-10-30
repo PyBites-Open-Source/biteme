@@ -109,5 +109,12 @@ def get_bite_metadata(bite_number: int) -> BiteMetadata:
     show_default=True,
 )
 def cli(bite_number: int, api_key: str, repository: StrPath) -> None:
+    # HACK: Raise a `RuntimeError` if the bite's environment is not the
+    # default one. Not worth making a custom exception for now. I just
+    # want some sort of error thrown so that you don't have a faulty environment.
+    bite_metadata = get_bite_metadata(bite_number)
+    if bite_metadata.function != "default":
+        raise RuntimeError("Unsupported bite.")
+
     bite_directory = download_and_extract_bite(bite_number, repository, api_key)
     create_bite_venv(bite_directory)
