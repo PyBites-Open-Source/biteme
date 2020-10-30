@@ -40,9 +40,13 @@ class BiteMetadata:
 
 
 def download_bite_archive(bite_number: int, api_key: Optional[str] = None) -> ZipFile:
-    url = (
-        f"http://codechalleng.es/api/bites/downloads/{api_key or DEFAULT_API_KEY}/{bite_number}"
-    )
+    # I'm choosing to have `api_key` be optional instead of setting it
+    # to `DEFAULT_API_KEY` because I want to capture the edge-case where
+    # someone passes the empty string, which will fail. Both `None` and
+    # the empty string will evaluate as `False`, which means that
+    # `api_key` will get the value of `DEFAULT_API_KEY`.
+    api_key = api_key or DEFAULT_API_KEY
+    url = f"http://codechalleng.es/api/bites/downloads/{api_key}/{bite_number}"
     with requests.get(url) as response:
         response.raise_for_status()
         return ZipFile(BytesIO(response.content))
