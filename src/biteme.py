@@ -15,8 +15,10 @@ import requests
 
 
 ENVIRONMENT_VARIABLE_PREFIX = "PYBITES"
+
 DEFAULT_API_KEY = "free"
 DEFAULT_REQUIREMENTS_URL = "https://raw.githubusercontent.com/pybites/platform-dependencies/master/requirements.txt"
+
 
 StrPath = Union[str, PathLike[str]]
 
