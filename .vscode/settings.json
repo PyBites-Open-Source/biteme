@@ -4,7 +4,7 @@
   "python.formatting.blackArgs": ["--experimental-string-processing"],
   "python.formatting.provider": "black",
   "python.linting.enabled": false,
-  "python.linting.mypyEnabled": false,
+  "python.linting.mypyEnabled": true,
   "python.linting.flake8Enabled": true,
   "python.analysis.typeCheckingMode": "basic",
   "python.linting.pylintEnabled": false,

@@ -2,74 +2,121 @@ from __future__ import annotations
 
 import subprocess
 import venv
+from dataclasses import dataclass
 from io import BytesIO
 from os import PathLike
 from pathlib import Path
-from types import SimpleNamespace
-from typing import Optional, Union
+from typing import Optional, Protocol, Union
 from zipfile import ZipFile
 
 import click
 import requests
+from more_itertools import only
+
+
+API_URL = "https://codechalleng.es/api/bites"
+
+DEFAULT_REQUIREMENTS_URL = "https://raw.githubusercontent.com/pybites/platform-dependencies/master/requirements.txt"
+
+DEFAULT_API_KEY = "free"
+ENVIRONMENT_VARIABLE_PREFIX = "PYBITES"
 
 
 StrPath = Union[str, PathLike[str]]
 
 
-def get_bite_directory(directory: StrPath, bite: int) -> Path:
-    return Path(directory) / f"{bite}"
+class HasEnvExe(Protocol):
+    @property
+    def env_exe(self) -> StrPath:
+        ...
 
 
-def download_zipped_bite(bite: int, api_key: str) -> ZipFile:
-    url = f"http://codechalleng.es/api/bites/downloads/{api_key}/{bite}"
+@dataclass(frozen=True)
+class BiteMetadata:
+    number: int
+    title: str
+    description: str
+    level: str
+    tags: list[str]
+    free: bool
+    score: int
+    function: str
+
+
+def get_bite_metadata(bite_number: int) -> BiteMetadata:
+    url = API_URL + f"/{bite_number}"
+    with requests.get(url) as response:
+        response.raise_for_status()
+        return BiteMetadata(**only(response.json()))
+
+
+def download_bite_archive(bite_number: int, api_key: Optional[str] = None) -> ZipFile:
+    # I'm choosing to have `api_key` be optional instead of setting it
+    # to `DEFAULT_API_KEY` because I want to capture the edge-case where
+    # someone passes the empty string, which will fail. Both `None` and
+    # the empty string will evaluate as `False`, which means that
+    # `api_key` will get the value of `DEFAULT_API_KEY`.
+    api_key = api_key or DEFAULT_API_KEY
+    url = API_URL + f"/downloads/{api_key}/{bite_number}"
     with requests.get(url) as response:
         response.raise_for_status()
         return ZipFile(BytesIO(response.content))
 
 
-def download_and_extract_bite(bite: int, api_key: str, directory: StrPath) -> Path:
-    bite_directory = get_bite_directory(directory, bite)
-    with download_zipped_bite(bite, api_key) as zipped_bite:
-        zipped_bite.extractall(bite_directory)
+def download_and_extract_bite(
+    bite_number: int, directory: StrPath, api_key: Optional[str] = None
+) -> Path:
+    bite_directory = Path(directory) / f"{bite_number}"
+    with download_bite_archive(bite_number, api_key) as archive:
+        archive.extractall(bite_directory)
     return bite_directory
 
 
-def get_bite_requirements() -> list[str]:
-    url = "https://raw.githubusercontent.com/pybites/platform-dependencies/master/requirements.txt"
+# Maybe this should be a class method?
+def get_requirements(url: str = DEFAULT_REQUIREMENTS_URL) -> list[str]:
     with requests.get(url) as response:
         response.raise_for_status()
-        return response.text.split()
+        return response.text.splitlines()  # type: ignore
 
 
-class _BiteEnvBuilder(venv.EnvBuilder):
-    def post_setup(self, context: SimpleNamespace) -> None:
-        python: str = context.env_exe
-        requirements = get_bite_requirements()
-        subprocess.run([python, "-m", "pip", "install"] + requirements)
+class BiteEnvBuilder(venv.EnvBuilder):
+    def post_setup(self, context: HasEnvExe) -> None:
+        python = context.env_exe
+        requirements = get_requirements()
+        subprocess.run([python, "-m", "pip", "install", *requirements], check=True)
 
 
-def create_virtual_environment(directory: StrPath) -> None:
-    builder = _BiteEnvBuilder(clear=True, with_pip=True, upgrade_deps=True)
-    builder.create(directory)
+def create_bite_venv(directory: StrPath) -> Path:
+    venv_directory = Path(directory) / ".venv"
+    builder = BiteEnvBuilder(clear=True, with_pip=True, upgrade_deps=True)
+    builder.create(venv_directory)
+    return venv_directory
 
 
-@click.command()
+@click.command(context_settings={"auto_envvar_prefix": ENVIRONMENT_VARIABLE_PREFIX})
 @click.version_option()
-@click.argument("bite", type=click.INT)
-@click.option(
-    "-k",
-    "--api-key",
-    default="free",
-    envvar="PYBITES_API_KEY",
-    help="Your PyBites API key.",
-)
+@click.argument("bite-number", type=click.IntRange(min=1, max=None))
 @click.option(
     "-r",
     "--repository",
-    envvar="PYBITES_REPOSITORY",
     type=click.Path(file_okay=False, dir_okay=True, writable=True),
-    help="The directory to download the bite to.",
+    help="The path to your local PyBites repository.",
+    show_default=True,
 )
-def main(bite: int, api_key: str, repository: StrPath) -> None:
-    bite_directory = download_and_extract_bite(bite, api_key, repository)
-    create_virtual_environment(bite_directory / ".venv")
+@click.option(
+    "-k",
+    "--api-key",
+    default=DEFAULT_API_KEY,
+    help="Your PyBites API key.",
+    show_default=True,
+)
+def cli(bite_number: int, api_key: str, repository: StrPath) -> None:
+    # HACK: Raise a `RuntimeError` if the bite's environment is not the
+    # default one. Not worth making a custom exception for now. I just
+    # want some sort of error thrown so that you don't have a faulty environment.
+    bite_metadata = get_bite_metadata(bite_number)
+    if bite_metadata.function != "default":
+        raise RuntimeError("Unsupported bite.")
+
+    bite_directory = download_and_extract_bite(bite_number, repository, api_key)
+    create_bite_venv(bite_directory)
