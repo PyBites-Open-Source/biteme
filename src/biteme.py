@@ -14,7 +14,7 @@ import requests
 from more_itertools import only
 
 
-API_URL = "http://codechalleng.es/api/bites"
+API_URL = "https://codechalleng.es/api/bites"
 
 DEFAULT_REQUIREMENTS_URL = "https://raw.githubusercontent.com/pybites/platform-dependencies/master/requirements.txt"
 
@@ -41,6 +41,13 @@ class BiteMetadata:
     free: bool
     score: int
     function: str
+
+
+def get_bite_metadata(bite_number: int) -> BiteMetadata:
+    url = API_URL + f"/{bite_number}"
+    with requests.get(url) as response:
+        response.raise_for_status()
+        return BiteMetadata(**only(response.json()))
 
 
 def download_bite_archive(bite_number: int, api_key: Optional[str] = None) -> ZipFile:
@@ -84,13 +91,6 @@ def create_bite_venv(directory: StrPath) -> Path:
     builder = BiteEnvBuilder(clear=True, with_pip=True, upgrade_deps=True)
     builder.create(venv_directory)
     return venv_directory
-
-
-def get_bite_metadata(bite_number: int) -> BiteMetadata:
-    url = API_URL + f"/{bite_number}"
-    with requests.get(url) as response:
-        response.raise_for_status()
-        return BiteMetadata(**only(response.json()))
 
 
 @click.command(context_settings={"auto_envvar_prefix": ENVIRONMENT_VARIABLE_PREFIX})
