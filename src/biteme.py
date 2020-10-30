@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import Optional, Protocol, Union
 from zipfile import ZipFile
 
-from more_itertools import only
 import click
 import requests
+from more_itertools import only
 
 
 ENVIRONMENT_VARIABLE_PREFIX = "PYBITES"
