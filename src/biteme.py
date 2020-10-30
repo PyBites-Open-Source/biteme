@@ -14,10 +14,12 @@ import requests
 from more_itertools import only
 
 
-ENVIRONMENT_VARIABLE_PREFIX = "PYBITES"
+API_URL = "http://codechalleng.es/api/bites"
+
+DEFAULT_REQUIREMENTS_URL = "https://raw.githubusercontent.com/pybites/platform-dependencies/master/requirements.txt"
 
 DEFAULT_API_KEY = "free"
-DEFAULT_REQUIREMENTS_URL = "https://raw.githubusercontent.com/pybites/platform-dependencies/master/requirements.txt"
+ENVIRONMENT_VARIABLE_PREFIX = "PYBITES"
 
 
 StrPath = Union[str, PathLike[str]]
@@ -48,7 +50,7 @@ def download_bite_archive(bite_number: int, api_key: Optional[str] = None) -> Zi
     # the empty string will evaluate as `False`, which means that
     # `api_key` will get the value of `DEFAULT_API_KEY`.
     api_key = api_key or DEFAULT_API_KEY
-    url = f"http://codechalleng.es/api/bites/downloads/{api_key}/{bite_number}"
+    url = API_URL + f"/downloads/{api_key}/{bite_number}"
     with requests.get(url) as response:
         response.raise_for_status()
         return ZipFile(BytesIO(response.content))
@@ -85,7 +87,7 @@ def create_bite_venv(directory: StrPath) -> Path:
 
 
 def get_bite_metadata(bite_number: int) -> BiteMetadata:
-    url = f"http://codechalleng.es/api/bites/{bite_number}"
+    url = API_URL + f"/{bite_number}"
     with requests.get(url) as response:
         response.raise_for_status()
         return BiteMetadata(**only(response.json()))
