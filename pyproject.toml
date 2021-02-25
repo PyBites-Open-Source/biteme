@@ -7,46 +7,40 @@ readme = "README.md"
 version = "0.1.0"
 
 
-[tool.poetry.scripts]
-biteme = "biteme:cli"
-
-
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.7"
 
-black = "^20.8b1"
 click = "^7.1.2"
-isort = "^5.5.4"
-requests = "^2.24.0"
-more-itertools = "^8.5.0"
+more-itertools = "^8.7.0"
+requests = "^2.25.1"
 
 [tool.poetry.dev-dependencies]
 autoflake = "^1.4"
-black = {git = "https://github.com/psf/black.git"}
-flake8-adjustable-complexity = "^0.0.1"
-flake8-bugbear = "^20.1.4"
-flake8-cognitive-complexity = "^0.1.0"
-flake8-expression-complexity = "^0.0.8"
-flakehell = "^0.6.1"
+# black = "^20.8b1"
+isort = "^5.7.0"
 ipykernel = "^5.3.4"
-isort = "^5.6.1"
 mypy = "^0.790"
 pytest = "^6.1.0"
 pytest-cov = "^2.10.1"
 pytest-mock = "^3.3.1"
 pytest-randomly = "^3.4.1"
+flake8 = "^3.8.4"
+
+[tool.poetry.scripts]
+biteme = "biteme:cli"
+
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core>=1.0.0a5"]
+requires = ["poetry-core>=1.0.0"]
+
 
 [tool.black]
-target-version = ["py39"]
+target-version = ["py37", "py38", "py39"]
+line-length = 88
 
 [tool.isort]
-add_imports = ["from __future__ import annotations"]
+profile = "black"
 combine_as_imports = true
 combine_star = true
 lines_after_imports = 2
-profile = "black"
-remove_redundant_aliases = true

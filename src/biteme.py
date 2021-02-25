@@ -1,35 +1,30 @@
 from __future__ import annotations
 
 import subprocess
+from subprocess import run
 import venv
-from collections.abc import Mapping
 from dataclasses import dataclass
 from io import BytesIO
 from os import PathLike
 from pathlib import Path
-from typing import Any, Optional, Protocol, Union, cast, List
+from typing import List, Optional, Protocol, Union, runtime_checkable
 from zipfile import ZipFile
 
 import click
 import requests
-from more_itertools import only
+from more_itertools import one
+from typing_extensions import runtime
 
 
-API_URL = "https://codechalleng.es/api/bites"
-
-DEFAULT_REQUIREMENTS_URL = "https://raw.githubusercontent.com/pybites/platform-dependencies/master/requirements.txt"
+ENVIRONMENT_VARIABLE_PREFIX = "PYBITES"
 
 DEFAULT_API_KEY = "free"
-ENVIRONMENT_VARIABLE_PREFIX = "PYBITES"
+
+API_URL = "https://codechalleng.es/api/bites"
+DEFAULT_REQUIREMENTS_URL = "https://raw.githubusercontent.com/pybites/platform-dependencies/master/requirements.txt"
 
 
 StrPath = Union[str, PathLike[str]]
-
-
-class HasEnvExe(Protocol):
-    @property
-    def env_exe(self) -> StrPath:
-        ...
 
 
 @dataclass(frozen=True)
@@ -48,7 +43,7 @@ def get_bite_metadata(bite_number: int) -> BiteMetadata:
     url = API_URL + f"/{bite_number}"
     with requests.get(url) as response:
         response.raise_for_status()
-        return BiteMetadata(**cast(Mapping[str, Any], only(response.json())))
+        return BiteMetadata(**one(response.json()))
 
 
 def download_bite_archive(bite_number: int, api_key: Optional[str] = None) -> ZipFile:
@@ -74,8 +69,16 @@ def get_requirements(url: str = DEFAULT_REQUIREMENTS_URL) -> List[str]:
         return response.text.splitlines()
 
 
+@runtime_checkable
+class _HasEnvExe(Protocol):
+    @property
+    def env_exe(self) -> StrPath:
+        ...
+
+
 class BiteEnvBuilder(venv.EnvBuilder):
-    def post_setup(self, context: HasEnvExe) -> None:
+    def post_setup(self, context: object) -> None:
+        assert isinstance(context, _HasEnvExe)
         python = context.env_exe
         requirements = get_requirements()
         subprocess.run([python, "-m", "pip", "install", *requirements], check=True)
@@ -83,27 +86,35 @@ class BiteEnvBuilder(venv.EnvBuilder):
 
 def create_bite_venv(directory: StrPath) -> Path:
     venv_directory = Path(directory) / ".venv"
-    builder = BiteEnvBuilder(clear=True, with_pip=True, upgrade_deps=True)
-    builder.create(venv_directory)
+    venv.create(venv_directory, clear=True, with_pip=True, upgrade_deps=True)
     return venv_directory
 
 
-@click.command(context_settings={"auto_envvar_prefix": ENVIRONMENT_VARIABLE_PREFIX})
+@click.command(
+    context_settings={
+        "help_option_names": ["-h", "--help"],
+        "auto_envvar_prefix": ENVIRONMENT_VARIABLE_PREFIX,
+    }
+)
 @click.version_option()
-@click.argument("bite-number", type=click.IntRange(min=1, max=None))
+@click.argument(
+    "bite-number",
+    type=click.IntRange(min=1, max=None),
+    metavar="BITE",
+)
 @click.option(
     "-r",
     "--repository",
-    type=click.Path(file_okay=False, dir_okay=True, writable=True),
+    required=True,
+    type=click.Path(file_okay=False, writable=True),
     help="The path to your local PyBites repository.",
-    show_default=True,
 )
 @click.option(
     "-k",
     "--api-key",
     default=DEFAULT_API_KEY,
-    help="Your PyBites API key.",
     show_default=True,
+    help="The PyBites API key.",
 )
 def cli(bite_number: int, api_key: str, repository: StrPath) -> None:
     # HACK: Raise a `RuntimeError` if the bite's environment is not the
