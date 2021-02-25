@@ -7,12 +7,13 @@ readme = "README.md"
 version = "0.1.0"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 
 click = "^7.1.2"
 more-itertools = "^8.7.0"
 requests = "^2.25.1"
 typing-extensions = { version = "^3.7.4", python = "<3.8" }
+appdirs = "^1.4.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.2"
@@ -25,9 +26,13 @@ mypy = "^0.812"
 flake8 = "^3.8.4"
 autoflake = "^1.4"
 ipykernel = "^5.5.0"
+wemake-python-styleguide = "^0.15.1"
+bandit = "^1.7.0"
+pylint = "^2.7.1"
+Faker = "^6.5.0"
 
 [tool.poetry.scripts]
-biteme = "biteme:cli"
+# biteme = "biteme:cli"
 
 
 [build-system]
@@ -36,7 +41,7 @@ requires = ["poetry-core>=1.0.0"]
 
 
 [tool.black]
-target-version = ["py37", "py38", "py39"]
+target-version = ["py38", "py39"]
 line-length = 88
 
 [tool.isort]
