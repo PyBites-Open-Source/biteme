@@ -43,16 +43,20 @@ def _assert_is_valid_bite_directory(path: Union[str, "os.PathLike[str]"]):
 
 
 @pytest.fixture
-def bite() -> str:
-    return "1"
+def bite_number() -> int:
+    return 1
 
 
 @pytest.fixture
-def directory(bite: str) -> pathlib.Path:
-    return pathlib.Path(bite)
+def directory(bite_number: int) -> pathlib.Path:
+    return pathlib.Path(f"bite{bite_number:04d}")
 
 
-def test_download(bite: str, directory: pathlib.Path, cli_runner: CLIRunner) -> None:
-    result = cli_runner.invoke(biteme.cli, ["download", bite, f"{directory}"])
+def test_download(
+    bite_number: int, directory: pathlib.Path, cli_runner: CLIRunner
+) -> None:
+    result = cli_runner.invoke(
+        biteme.cli, ["download", f"{bite_number}", f"{directory}"]
+    )
     assert result.exit_code == 0
     _assert_is_valid_bite_directory(directory)
