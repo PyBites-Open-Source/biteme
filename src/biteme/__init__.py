@@ -1,16 +1,18 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple, cast
-from urllib.parse import urljoin
+import dataclasses
+import io
+import os
+import pathlib
+import zipfile
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
+import click
+import more_itertools
 import requests
-from more_itertools import one
 
 
 _API_URL = "https://codechalleng.es/api/bites/"
-
-
-import dataclasses
 
 
 @dataclasses.dataclass(frozen=True)
@@ -25,10 +27,11 @@ class _BiteMetadata:
     function: str
 
 
-def get_bite_metadata(bite: str) -> _BiteMetadata:
-    with requests.get(f"https://codechalleng.es/api/bites/{bite}") as response:
-        metadata: Dict[str, Any] = one(response.json())
-
+def _get_bite_metadata(bite: str) -> _BiteMetadata:
+    url = f"https://codechalleng.es/api/bites/{bite}"
+    response = requests.get(url)
+    response.raise_for_status()
+    metadata = more_itertools.one(cast(List[Dict[str, Any]], response.json()))
     return _BiteMetadata(
         number=metadata["number"],
         title=metadata["title"],
@@ -41,8 +44,40 @@ def get_bite_metadata(bite: str) -> _BiteMetadata:
     )
 
 
-def download_bite(bite: str):
+def _download_bite(
+    bite: str, api_key: str, directory: Union[str, "os.PathLike[str]"]
+) -> None:
+    url = f"https://codechalleng.es/api/bites/downloads/{api_key}/{bite}"
+    response = requests.get(url)
+    response.raise_for_status()
+    zip_file = zipfile.ZipFile(io.BytesIO(response.content))
+    zip_file.extractall(directory)
+
+
+def _directory_callback(ctx: click.Context, param: click.Parameter, value: Any):
+    value = value or ctx.params["bite"]
+    pathlib.Path(value).mkdir(parents=True)
+    return value
+
+
+@click.group()
+def cli() -> None:
     ...
+
+
+@cli.command()
+@click.argument("bite")
+@click.argument(
+    "directory",
+    type=click.Path(exists=False, file_okay=False, writable=True),
+    required=False,
+    callback=_directory_callback,
+)
+@click.option("--api-key", envvar="PYBITES_API_KEY")
+def download(
+    bite: str, directory: Union[str, "os.PathLike[str]"], api_key: str
+) -> None:
+    _download_bite(bite, api_key, directory)
 
 
 # _StrPath = Union[str, "os.PathLike[str]"]
