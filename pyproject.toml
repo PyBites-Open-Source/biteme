@@ -46,6 +46,7 @@ line-length = 88
 
 [tool.isort]
 profile = "black"
+float_to_top = true
 combine_as_imports = true
 combine_star = true
 lines_after_imports = 2
