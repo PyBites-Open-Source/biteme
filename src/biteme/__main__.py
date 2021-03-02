@@ -1,10 +1,18 @@
 from __future__ import annotations
 
-from typing import Optional
+import os
+from typing import Optional, Union
 
 import click
 
-from biteme import download_and_extract_bite
+from . import bites
+
+
+__all__ = ["cli"]
+
+
+_PositiveInt = click.IntRange(min=1)
+_WritableDirectoryPath = click.Path(file_okay=False, writable=True)
 
 
 @click.group(context_settings={"auto_envvar_prefix": "PYBITES"})
@@ -15,12 +23,12 @@ def cli() -> None:
 
 @cli.command()
 @click.option("--api-key", default="free", show_default=True, show_envvar=True)
-@click.argument("bite", required=True, type=click.IntRange(min=1))
-@click.argument(
-    "directory", required=False, type=click.Path(file_okay=False, writable=True)
-)
-def download(api_key: str, bite: int, directory: Optional[str] = None) -> None:
-    download_and_extract_bite(api_key, bite, directory)
+@click.argument("bite", required=True, type=_PositiveInt)
+@click.argument("directory", required=False, type=_WritableDirectoryPath)
+def download(
+    api_key: str, bite: int, directory: Optional[Union[str, "os.PathLike[str]"]] = None
+) -> None:
+    bites.download_and_extract(api_key, bite, directory)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import click.testing
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
-import biteme.__main__
+import biteme
 
 
 @pytest.mark.parametrize(
@@ -18,7 +18,7 @@ def test_download(number: int, module: str, tmp_path: Path, monkeypatch: MonkeyP
     monkeypatch.chdir(tmp_path)
 
     cli_runner = click.testing.CliRunner()
-    result = cli_runner.invoke(biteme.__main__.cli, ["download", f"{number}"])
+    result = cli_runner.invoke(biteme.cli, ["download", f"{number}"])
     assert result.exit_code == 0
 
     bite_dir = tmp_path / f"bite{number:04d}"
