@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import os
-from typing import Optional, Union
+from typing import TYPE_CHECKING, Optional
 
 import click
 
 from . import bites
+
+
+if TYPE_CHECKING:
+    from _typeshed import StrPath
 
 
 __all__ = ["cli"]
@@ -25,10 +29,8 @@ def cli() -> None:
 @click.option("--api-key", default="free", show_default=True, show_envvar=True)
 @click.argument("bite", required=True, type=_PositiveInt)
 @click.argument("directory", required=False, type=_WritableDirectoryPath)
-def download(
-    api_key: str, bite: int, directory: Optional[Union[str, "os.PathLike[str]"]] = None
-) -> None:
-    bites.download_and_extract(api_key, bite, directory)
+def download(api_key: str, bite: int, directory: Optional["StrPath"]) -> None:
+    bites.download(api_key, bite, directory)
 
 
 if __name__ == "__main__":

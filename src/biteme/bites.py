@@ -1,26 +1,27 @@
 from __future__ import annotations
 
-import dataclasses
 import io
-import os
-import pathlib
-import urllib.parse
-import zipfile
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
+from urllib.parse import urljoin
+from zipfile import ZipFile
 
 import more_itertools
 import requests
 
 
-__all__ = ["download_and_extract"]
+if TYPE_CHECKING:
+    from _typeshed import StrPath
+
+
+__all__ = ["download"]
 
 
 _API_URL = "https://codechalleng.es/api/"
-_BITES_URL = urllib.parse.urljoin(_API_URL, "bites/")
-_DOWNLOAD_URL = urllib.parse.urljoin(_BITES_URL, "downloads/")
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclass(frozen=True)
 class _Info:
     number: int
     title: str
@@ -33,7 +34,7 @@ class _Info:
 
 
 def _get_info(number: int) -> _Info:
-    url = urllib.parse.urljoin(_BITES_URL, f"{number}")
+    url = urljoin(_API_URL, f"bites/{number}")
     response = requests.get(url)
     response.raise_for_status()
     data = cast(Dict[str, Any], more_itertools.one(response.json()))
@@ -49,27 +50,29 @@ def _get_info(number: int) -> _Info:
     )
 
 
-def _download_zip_file(api_key: str, number: int) -> zipfile.ZipFile:
-    url = urllib.parse.urljoin(_DOWNLOAD_URL, f"{api_key}/{number}")
+def _download_archive(api_key: str, bite_number: int) -> ZipFile:
+    url = urljoin(_API_URL, f"bites/downloads/{api_key}/{bite_number}")
     response = requests.get(url)
     response.raise_for_status()
-    return zipfile.ZipFile(io.BytesIO(response.content))
+    return ZipFile(io.BytesIO(response.content))
 
 
-def download_and_extract(
-    api_key: str,
-    number: int,
-    path: Optional[Union[str, "os.PathLike[str]"]] = None,
-) -> None:
-    """Download and extract a PyBites bite.
+def download(
+    api_key: str, bite_number: int, directory: Optional["StrPath"] = None
+) -> Path:
+    """Download a bite.
 
     Args:
         api_key: PyBites API key.
-        bite_number: Number of the bite to download.
-        path (optional): Path to extract the bite directory to.
-            If not provided, the current working directory is used.
+        bite_number: Bite number.
+        directory (optional): Directory to extract the bite into.
+            If not specified, the current working directory is used.
+
+    Returns:
+        The bite directory.
     """
-    path = pathlib.Path(path or os.getcwd())
-    bite_dir = path / f"bite{number:04d}"
-    with _download_zip_file(api_key, number) as zip_file:
-        zip_file.extractall(bite_dir)
+    directory = Path(directory) if directory else Path.cwd()
+    bite_dir = directory / f"Bite {bite_number}"
+    with _download_archive(api_key, bite_number) as archive:
+        archive.extractall(bite_dir)
+    return bite_dir
