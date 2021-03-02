@@ -3,16 +3,19 @@ from __future__ import annotations
 import dataclasses
 import io
 import os
+import pathlib
+import urllib.parse
 import zipfile
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import click
 import more_itertools
 import requests
 
-import urllib.parse
 
-_BITE_API_URL = "https://codechalleng.es/api/bites/"
+_API_URL = "https://codechalleng.es/api/"
+_BITES_URL = urllib.parse.urljoin(_API_URL, "bites/")
+_DOWNLOAD_URL = urllib.parse.urljoin(_BITES_URL, "downloads/")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -28,10 +31,10 @@ class _BiteInfo:
 
 
 def _get_bite_info(bite_number: int) -> _BiteInfo:
-    url = urllib.parse.urljoin(_BITE_API_URL, f"{bite_number}")
+    url = urllib.parse.urljoin(_BITES_URL, f"{bite_number}")
     response = requests.get(url)
     response.raise_for_status()
-    data = more_itertools.one(cast(List[Dict[str, Any]], response.json()))
+    data = cast(Dict[str, Any], more_itertools.one(response.json()))
     return _BiteInfo(
         number=data["number"],
         title=data["title"],
@@ -44,56 +47,33 @@ def _get_bite_info(bite_number: int) -> _BiteInfo:
     )
 
 
-def _download_bite(
-    bite_number: int, api_key: str, directory: Union[str, "os.PathLike[str]"]
-) -> None:
-    url = urllib.parse.urljoin(_BITE_API_URL, f"downloads/{api_key}/{bite_number}")
+def _download_bite_archive(api_key: str, bite_number: int) -> zipfile.ZipFile:
+    url = urllib.parse.urljoin(_DOWNLOAD_URL, f"{api_key}/{bite_number}")
     response = requests.get(url)
     response.raise_for_status()
-    zip_file = zipfile.ZipFile(io.BytesIO(response.content))
-    zip_file.extractall(directory)
+    return zipfile.ZipFile(io.BytesIO(response.content))
 
 
-_PositiveInt = click.IntRange(min=1)
-_DirectoryPath = click.Path(file_okay=False, resolve_path=True)
+def _download_and_extract_bite(
+    api_key: str, bite_number: int, path: Optional[Union[str, "os.PathLike"]] = None
+) -> None:
+    path = pathlib.Path(path or os.getcwd())
+    bite_dir = path / f"bite{bite_number:04d}"
+    with _download_bite_archive(api_key, bite_number) as bite_archive:
+        bite_archive.extractall(bite_dir)
 
 
-def _directory_callback(
-    ctx: click.Context, param: click.Parameter, value: Optional[str]
-) -> str:
-    if not value:
-        bite_number: int = ctx.params["bite_number"]
-        return f"bite{bite_number:04d}"
-    return value
-
-
-@click.group()
+@click.group(context_settings={"auto_envvar_prefix": "PYBITES"})
+@click.version_option()
 def cli() -> None:
     ...
 
 
 @cli.command()
-@click.argument("bite_number", type=_PositiveInt)
-@click.option(
-    "--api-key",
-    default="free",
-    show_default=True,
-    envvar="PYBITES_API_KEY",
-    show_envvar=True,
-)
+@click.option("--api-key", default="free", show_default=True, show_envvar=True)
+@click.argument("bite", required=True, type=click.IntRange(min=1))
 @click.argument(
-    "directory",
-    required=False,
-    type=_DirectoryPath,
-    callback=_directory_callback,
+    "directory", required=False, type=click.Path(file_okay=False, writable=True)
 )
-def download(
-    bite_number: int, api_key: str, directory: Union[str, "os.PathLike[str]"]
-) -> None:
-    _download_bite(bite_number, api_key, directory)
-
-
-@cli.command()
-@click.argument("bite_number", type=_PositiveInt)
-def info(bite_number: int) -> None:
-    ...
+def download(api_key: str, bite: int, directory: Optional[str] = None) -> None:
+    _download_and_extract_bite(api_key, bite, directory)
