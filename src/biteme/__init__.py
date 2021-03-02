@@ -8,7 +8,6 @@ import urllib.parse
 import zipfile
 from typing import Any, Dict, Optional, Tuple, Union, cast
 
-import click
 import more_itertools
 import requests
 
@@ -54,26 +53,10 @@ def _download_bite_archive(api_key: str, bite_number: int) -> zipfile.ZipFile:
     return zipfile.ZipFile(io.BytesIO(response.content))
 
 
-def _download_and_extract_bite(
+def download_and_extract_bite(
     api_key: str, bite_number: int, path: Optional[Union[str, "os.PathLike"]] = None
 ) -> None:
     path = pathlib.Path(path or os.getcwd())
     bite_dir = path / f"bite{bite_number:04d}"
     with _download_bite_archive(api_key, bite_number) as bite_archive:
         bite_archive.extractall(bite_dir)
-
-
-@click.group(context_settings={"auto_envvar_prefix": "PYBITES"})
-@click.version_option()
-def cli() -> None:
-    ...
-
-
-@cli.command()
-@click.option("--api-key", default="free", show_default=True, show_envvar=True)
-@click.argument("bite", required=True, type=click.IntRange(min=1))
-@click.argument(
-    "directory", required=False, type=click.Path(file_okay=False, writable=True)
-)
-def download(api_key: str, bite: int, directory: Optional[str] = None) -> None:
-    _download_and_extract_bite(api_key, bite, directory)
