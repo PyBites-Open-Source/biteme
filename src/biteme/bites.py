@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Optional, Tuple
 from urllib.parse import urljoin
 from zipfile import ZipFile
 
@@ -12,6 +12,7 @@ import requests
 
 
 if TYPE_CHECKING:
+
     from _typeshed import StrPath
 
 
@@ -33,11 +34,11 @@ class _Info:
     function: str
 
 
-def _get_info(number: int) -> _Info:
-    url = urljoin(_API_URL, f"bites/{number}")
+def _info(bite_number: int) -> _Info:
+    url = urljoin(_API_URL, f"bites/{bite_number}")
     response = requests.get(url)
     response.raise_for_status()
-    data = cast(Dict[str, Any], more_itertools.one(response.json()))
+    data = more_itertools.one(response.json())
     return _Info(
         number=data["number"],
         title=data["title"],
