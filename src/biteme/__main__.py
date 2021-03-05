@@ -1,36 +1,36 @@
 from __future__ import annotations
 
-import os
-from typing import TYPE_CHECKING, Optional
+from pathlib import Path
+from typing import Optional
 
-import click
+import typer
 
-from . import bites
-
-
-if TYPE_CHECKING:
-    from _typeshed import StrPath
+from biteme import bites
 
 
 __all__ = ["cli"]
 
 
-_PositiveInt = click.IntRange(min=1)
-_WritableDirectoryPath = click.Path(file_okay=False, writable=True)
-
-
-@click.group(context_settings={"auto_envvar_prefix": "PYBITES"})
-@click.version_option()
-def cli() -> None:
-    ...
+cli = typer.Typer(context_settings={"auto_envvar_prefix": "PYBITES"})
 
 
 @cli.command()
-@click.option("--api-key", default="free", show_default=True, show_envvar=True)
-@click.argument("bite", required=True, type=_PositiveInt)
-@click.argument("directory", required=False, type=_WritableDirectoryPath)
-def download(api_key: str, bite: int, directory: Optional["StrPath"]) -> None:
-    bites.download(api_key, bite, directory)
+def info(bite: int) -> None:
+    bite_info = bites._info(bite)
+    typer.echo(f"{bite_info=}")
+
+
+@cli.command()
+def download(
+    bite: int = typer.Argument(...),
+    directory: Optional[Path] = typer.Argument(
+        None,
+        writable=True,
+        file_okay=False,
+    ),
+    api_key: Optional[str] = typer.Option(None),
+) -> None:
+    bites.download(bite, directory, api_key)
 
 
 if __name__ == "__main__":
