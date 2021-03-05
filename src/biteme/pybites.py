@@ -15,24 +15,25 @@ if TYPE_CHECKING:
     from _typeshed import StrPath
 
 
-__all__ = ["download"]
+__all__ = ["download_bite"]
+
 
 _DEFAULT_API_KEY = "free"
 
 
 _API_URL = "https://codechalleng.es/api/"
-_INFO_URL = urljoin(_API_URL, "bites/")
-_DOWNLOAD_URL = urljoin(_API_URL, "bites/downloads/")
+_BITE_INFO_URL = urljoin(_API_URL, "bites/")
+_BITE_DOWNLOAD_URL = urljoin(_API_URL, "bites/downloads/")
 
 
-def _download_archive(bite_number: int, api_key: Optional[str] = None) -> ZipFile:
-    url = urljoin(_DOWNLOAD_URL, f"{api_key or _DEFAULT_API_KEY}/{bite_number}")
+def _download_bite_archive(bite_number: int, api_key: Optional[str] = None) -> ZipFile:
+    url = urljoin(_BITE_DOWNLOAD_URL, f"{api_key or _DEFAULT_API_KEY}/{bite_number}")
     response = requests.get(url)
     response.raise_for_status()
     return ZipFile(BytesIO(response.content))
 
 
-def download(
+def download_bite(
     bite_number: int,
     directory: Optional["StrPath"] = None,
     api_key: Optional[str] = None,
@@ -49,13 +50,13 @@ def download(
         A path to a directory with the bite content files.
     """
     bite_dir = Path(directory or Path.cwd()) / f"Bite {bite_number}"
-    with _download_archive(bite_number, api_key) as archive:
+    with _download_bite_archive(bite_number, api_key) as archive:
         archive.extractall(bite_dir)
     return bite_dir
 
 
 @dataclass(frozen=True)
-class _Info:
+class _BiteInfo:
     number: int
     title: str
     description: str
@@ -66,12 +67,12 @@ class _Info:
     function: str
 
 
-def _info(bite_number: int) -> _Info:
-    url = urljoin(_INFO_URL, f"{bite_number}")
+def _bite_info(bite_number: int) -> _BiteInfo:
+    url = urljoin(_BITE_INFO_URL, f"{bite_number}")
     response = requests.get(url)
     response.raise_for_status()
     data = one(response.json())
-    return _Info(
+    return _BiteInfo(
         number=data["number"],
         title=data["title"],
         description=data["description"],

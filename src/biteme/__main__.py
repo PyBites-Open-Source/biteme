@@ -5,7 +5,7 @@ from typing import Optional
 
 import typer
 
-from biteme import bites
+from biteme import pybites
 
 
 __all__ = ["cli"]
@@ -16,7 +16,7 @@ cli = typer.Typer(context_settings={"auto_envvar_prefix": "PYBITES"})
 
 @cli.command()
 def info(bite: int) -> None:
-    bite_info = bites._info(bite)
+    bite_info = pybites._bite_info(bite)
     typer.echo(f"{bite_info=}")
 
 
@@ -30,7 +30,7 @@ def download(
     ),
     api_key: Optional[str] = typer.Option(None),
 ) -> None:
-    bites.download(bite, directory, api_key)
+    pybites.download_bite(bite, directory, api_key)
 
 
 if __name__ == "__main__":
