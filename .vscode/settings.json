@@ -1,13 +1,32 @@
 {
-  "python.formatting.blackArgs": ["--experimental-string-processing"],
+  "files.exclude": {
+    ".mypy_cache": true,
+    ".pytest_cache": true,
+    ".vscode/tags": true,
+    "**/__pycache__": true,
+    "**/py.typed": true,
+  },
+  "[python]": {},
+  "python.analysis.useLibraryCodeForTypes": false,
   "python.formatting.provider": "black",
-  "python.linting.enabled": false,
+  "python.formatting.blackArgs": [
+    "--config=${workspaceFolder}/pyproject.toml"
+  ],
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Enabled": false,
   "python.linting.mypyEnabled": true,
-  "python.linting.flake8Enabled": true,
-  "python.analysis.typeCheckingMode": "basic",
-  "python.linting.pylintEnabled": true,
-  "python.testing.pytestArgs": ["--randomly-dont-reorganize", "tests"],
+  "python.linting.mypyArgs": [
+    "--config-file=${workspaceFolder}/pyproject.toml",
+    "--follow-imports=silent",
+    "--ignore-missing-imports",
+    "--no-pretty",
+    "--no-show-error-context",
+    "--show-column-numbers",
+  ],
+  "python.sortImports.args": [
+    "--settings=${workspaceFolder}/pyproject.toml"
+  ],
   "python.testing.pytestEnabled": true,
-  "python.linting.lintOnSave": true,
-  "python.linting.banditEnabled": true
+Ø
 }
