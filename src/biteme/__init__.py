@@ -1,9 +1,10 @@
 import importlib.metadata
-from typing import Final
 
-from .bites import BiteInfo as BiteInfo
-from .bites import download_bite as download_bite
-from .bites import get_bite_info as get_bite_info
-from .cli import cli as cli
+from .bites import BiteInfo
+from .bites import download as download_bite
+from .bites import info as get_bite_info
+from .cli import cli
 
-__version__: Final[str] = importlib.metadata.version(__package__)
+__version__ = importlib.metadata.version(__package__)
+
+__all__ = ["BiteInfo", "cli", "download_bite", "get_bite_info"]

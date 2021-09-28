@@ -1,11 +1,9 @@
 import cgi
 import io
-import operator
 import os
 import pathlib
 import zipfile
 from typing import FrozenSet
-from typing import List
 from typing import Union
 
 import pydantic
@@ -28,38 +26,20 @@ class BiteInfo(pydantic.BaseModel):
     function: str
 
 
-def get_all_bite_info() -> List[BiteInfo]:
-    """Get info for all the bites, sorted by number.
-
-    Example:
-        >>> bites = get_all_bite_info()
-
-    """
-    url = "https://codechalleng.es/api/bites/"
-    response = requests.get(url)
-    response.raise_for_status()
-    bites = (BiteInfo(**data) for data in response.json())
-    return sorted(bites, key=operator.attrgetter("number"))
-
-
-def get_bite_info(number: int) -> BiteInfo:
-    """Get info for a specific bite.
-
-    Example:
-        >>> bite = get_bite_info(1)
-
-    """
-    url = f"https://codechalleng.es/api/bites/{number}"
+def info(bite_number: int) -> BiteInfo:
+    """Get info for a codechalleng.es bite exercise."""
+    url = f"https://codechalleng.es/api/bites/{bite_number}"
     response = requests.get(url)
     response.raise_for_status()
     [data] = response.json()
     return BiteInfo(**data)
 
 
-def download_bite(
-    api_key: str, number: int, directory: Union[str, "os.PathLike[str]"]
+def download(
+    api_key: str, bite_number: int, directory: Union[str, "os.PathLike[str]"]
 ) -> pathlib.Path:
-    url = f"https://codechalleng.es/api/bites/downloads/{api_key}/{number}"
+    """Download a codechalleng.es bite exercise."""
+    url = f"https://codechalleng.es/api/bites/downloads/{api_key}/{bite_number}"
     response = requests.get(url)
     response.raise_for_status()
 
