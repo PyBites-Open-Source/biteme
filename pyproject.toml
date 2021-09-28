@@ -5,11 +5,24 @@ requires = ["poetry-core"]
 [tool.poetry]
 name = "biteme"
 version = "0.1.0"
-description = "biteme"
+description = "Interact with PyBites codechalleng.es from the command-line."
+license = "MIT"
 authors = ["Will Frey <jfrey89@gmail.com>"]
 readme = "README.md"
 
-classifiers = ["Typing :: Typed"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
