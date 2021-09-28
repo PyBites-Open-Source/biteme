@@ -6,7 +6,6 @@ import operator
 import os
 import pathlib
 import zipfile
-from typing import Any
 from typing import Union
 
 import pydantic
@@ -15,6 +14,8 @@ import typer
 
 
 class BiteInfo(pydantic.BaseModel):
+    """Information about a codechalleng.es bite exercise."""
+
     class Config:
         allow_mutation = False
 
@@ -43,7 +44,7 @@ def get_bite_info(number: int) -> BiteInfo:
 
 
 def get_all_bite_info() -> list[BiteInfo]:
-    """Get info for all the bites.
+    """Get info for all the bites, sorted by number.
 
     Example:
         >>> bites = get_all_bite_info()
@@ -52,7 +53,8 @@ def get_all_bite_info() -> list[BiteInfo]:
     url = "https://codechalleng.es/api/bites/"
     response = requests.get(url)
     response.raise_for_status()
-    return [BiteInfo(**data) for data in response.json()]
+    bites = (BiteInfo(**data) for data in response.json())
+    return sorted(bites, key=operator.attrgetter("number"))
 
 
 def download_bite(
@@ -60,11 +62,11 @@ def download_bite(
 ) -> pathlib.Path:
     url = f"https://codechalleng.es/api/bites/downloads/{api_key}/{number}"
     response = requests.get(url)
-    response.raise_for_status
+    response.raise_for_status()
 
     content_disposition = response.headers["content-disposition"]
-    _, header_options = cgi.parse_header(content_disposition)
-    filename = header_options["filename"]
+    _, params = cgi.parse_header(content_disposition)
+    filename = params["filename"]
 
     directory = pathlib.Path(directory).resolve()
     extract_dir = (directory / filename).with_suffix("")
@@ -80,9 +82,15 @@ cli = typer.Typer()
 
 @cli.command()
 def download(
-    *,
-    api_key: str = typer.Option(..., envvar="BITEME_API_KEY"),
-    number: int = typer.Argument(..., metavar="BITE_NUMBER"),
-    directory: pathlib.Path = typer.Option(".", file_okay=False, resolve_path=True),
+    api_key: str = typer.Option("freebie", envvar="BITEME_API_KEY"),
+    bite_number: int = typer.Argument(...),
+    directory: pathlib.Path = typer.Option(".", file_okay=False),
 ) -> None:
-    ...
+    bite_dir = download_bite(api_key, bite_number, directory)
+    typer.echo(bite_dir)
+
+
+@cli.command()
+def info(bite_number: int = typer.Argument(...)) -> None:
+    bite = get_bite_info(bite_number)
+    typer.echo(bite.json())
