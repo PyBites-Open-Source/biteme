@@ -5,7 +5,7 @@ import biteme
 
 class TestBiteInfo:
     def test___init__(self) -> None:
-        bite_info = biteme.BiteInfo(
+        bite = biteme.BiteInfo(
             number=1,
             title="title",
             description="description",
@@ -15,14 +15,23 @@ class TestBiteInfo:
             score=2,
             function="function",
         )
-        assert bite_info.number == 1
-        assert bite_info.title == "title"
-        assert bite_info.description == "description"
-        assert bite_info.level == "level"
-        assert bite_info.tags == frozenset({"tag1", "tag2"})
-        assert bite_info.free is True
-        assert bite_info.score == 2
-        assert bite_info.function == "function"
+        assert bite.number == 1
+        assert bite.title == "title"
+        assert bite.description == "description"
+        assert bite.level == "level"
+        assert bite.tags == frozenset({"tag1", "tag2"})
+        assert bite.free is True
+        assert bite.score == 2
+        assert bite.function == "function"
+
+
+def test_get_bite_info() -> None:
+    bite = biteme.get_bite_info(1)
+    assert bite.number == 1
+
+
+def test_get_bite_info_raises_for_not_found() -> None:
+    biteme.get_bite_info(0)
 
 
 def test_download_bite(api_key: str, tmp_path: pathlib.Path) -> None:
