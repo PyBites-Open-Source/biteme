@@ -1,8 +1,8 @@
 import cgi
 import io
-import os
-import pathlib
 import zipfile
+import os
+from pathlib import Path
 from typing import FrozenSet
 from typing import Union
 
@@ -37,7 +37,7 @@ def info(bite_number: int) -> BiteInfo:
 
 def download(
     api_key: str, bite_number: int, directory: Union[str, "os.PathLike[str]"]
-) -> pathlib.Path:
+) -> Path:
     """Download a codechalleng.es bite exercise."""
     url = f"https://codechalleng.es/api/bites/downloads/{api_key}/{bite_number}"
     response = requests.get(url)
@@ -47,7 +47,7 @@ def download(
     _, params = cgi.parse_header(content_disposition)
     filename = params["filename"]
 
-    directory = pathlib.Path(directory).resolve()
+    directory = Path(directory).resolve()
     extract_dir = (directory / filename).with_suffix("")
 
     with zipfile.ZipFile(io.BytesIO(response.content)) as zip:
