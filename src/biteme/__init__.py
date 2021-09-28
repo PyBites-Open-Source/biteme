@@ -1,5 +1,10 @@
-from biteme.__main__ import cli
-from biteme.pybites import _bite_info, download_bite
+import importlib.metadata
 
+from .bites import BiteInfo
+from .bites import download as download_bite
+from .bites import info as get_bite_info
+from .cli import cli
 
-__all__ = ["cli", "download_bite", "_bite_info"]
+__version__ = importlib.metadata.version(__package__)
+
+__all__ = ["BiteInfo", "cli", "download_bite", "get_bite_info"]
