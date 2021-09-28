@@ -28,5 +28,4 @@
     "--settings=${workspaceFolder}/pyproject.toml"
   ],
   "python.testing.pytestEnabled": true,
-Ø
 }
