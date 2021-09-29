@@ -1,6 +1,7 @@
 {
   "files.exclude": {
     ".mypy_cache": true,
+    ".nox": true,
     ".pytest_cache": true,
     ".vscode/tags": true,
     "**/__pycache__": true,
