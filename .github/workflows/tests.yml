@@ -23,4 +23,4 @@ jobs:
         run: pip install nox-poetry==0.8.6
 
       - name: run tests
-        run: poetry run nox
+        run: nox
