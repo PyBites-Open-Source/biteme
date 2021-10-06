@@ -10,8 +10,9 @@ jobs:
       - name: checkout repo content
         uses: actions/checkout@v2
 
-      - name: setup python
-        uses: actions/setup-python@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
 
       - name: install nox
         run: pip install nox==2021.6.12
