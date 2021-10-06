@@ -16,7 +16,7 @@ jobs:
       - name: install nox
         run: pip install nox==2021.6.12
 
-      - name: install poetry
+      - name: Install poetry
         run: pip install poetry==1.1.11
 
       - name: install nox-poetry
