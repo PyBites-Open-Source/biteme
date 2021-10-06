@@ -1,0 +1,26 @@
+name: Tests
+
+on: push
+
+jobs:
+  tests:
+    name: Runs tests with Nox
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install nox
+        run: pip install nox==2021.6.12
+
+      - name: Install poetry
+        run: pip install poetry==1.1.11
+
+      - name: Install nox-poetry
+        run: pip install nox-poetry==0.8.6
+
+      - name: Run tests
+        run: nox
