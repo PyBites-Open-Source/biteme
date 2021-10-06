@@ -1,8 +1,5 @@
 name: Publish to Test PyPI
-on:
-  push:
-    tags:
-      - '*.*.*'
+on: push
 
 jobs:
   test-pypi-release:
@@ -14,7 +11,7 @@ jobs:
           python-version: 3.9
 
       - name: Install Poetry
-        run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+        run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/instal-poetry.py | python -- -y
       - name: Add Poetry to path
         run: echo "${HOME}/.poetry/bin" >> $GITHUB_PATH
       - name: Install Poetry
