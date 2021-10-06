@@ -78,3 +78,6 @@ dmypy.json
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
+
+# ignore downloaded files
+pybites_bite*
