@@ -13,7 +13,7 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: install nox
+      - name: Install nox
         run: pip install nox==2021.6.12
 
       - name: Install poetry
