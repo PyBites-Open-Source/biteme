@@ -4,7 +4,7 @@ on:
     types: [published]
 
 jobs:
-  pypi_release:
+  pypi-release:
     name: Builds Using Poetry and Publishes to PyPI
     runs-on: ubuntu-latest
     steps:
