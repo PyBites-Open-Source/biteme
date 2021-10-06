@@ -19,7 +19,7 @@ jobs:
       - name: Install poetry
         run: pip install poetry==1.1.11
 
-      - name: install nox-poetry
+      - name: Install nox-poetry
         run: pip install nox-poetry==0.8.6
 
       - name: Run tests
