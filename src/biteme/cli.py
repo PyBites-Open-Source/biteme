@@ -24,5 +24,5 @@ def download(
 @cli.command()
 def info(bite_number: int = typer.Argument(...)) -> None:
     """Get information about a codechallenge.es bite."""
-    bite = bites.get_info(bite_number)
+    bite = bites.info(bite_number)
     typer.echo(bite)
