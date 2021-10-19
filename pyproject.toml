@@ -31,7 +31,7 @@ pytest = "^6.2.5"
 pytest-cov = "^2.12.1"
 pytest-mock = "^3.6.1"
 pytest-randomly = "^3.10.1"
-rope = "^0.20.1"
+rope = "^0.21.0"
 nox = "^2021.6.12"
 nox-poetry = "^0.8.6"
 
